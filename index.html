@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Square Generator</title>
+        <meta charset="UTF-8">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            button{
+                background-color:#575757;
+                -moz-border-radius:13px;
+                -webkit-border-radius:11px;
+                border: 1px solid grey;
+                border-radius:11px;
+                display:inline-block;
+                cursor:pointer;
+                color:#ffffff;
+                font-family:Arial;
+                font-size:17px;
+                font-weight:bold;
+                margin-right: 10px;
+                padding:16px 16px;
+                text-decoration:none;
+                text-shadow:0px 1px 0px #2f6627;}
+            #addBlue {
+                background-color:#177fed;
+
+            }
+            #addBlue:hover {
+                background-color:#005e99;
+            }
+            #addBlue:active {
+                position:relative;
+                top:1px;
+            }
+
+            #addRed{
+                background-color:#ff5454;
+
+            }
+            #addRed:hover {
+                background-color:#d40000;
+            }
+            #addRed:active {
+                position:relative;
+                top:1px;
+            }
+
+            div{position:absolute; border: 3px solid black;border-radius:5px;}
+            .red{background-color:#ff5454;align-items: center;
+                 display: flex;
+                 flex-direction: row;
+                 flex-wrap: wrap;
+                 justify-content: center}
+            .blue{background-color:#177fed;align-items: center;
+                  display: flex;
+                  flex-direction: row;
+                  flex-wrap: wrap;
+                  justify-content: center}
+            .div_num{font-size: 2.1em;
+                     color: white;
+                     display: table;
+                     font-family: cursive;
+                     margin: 0 auto;}
+            #canvas{border:none}
+
+        </style>
+    </head>
+    <body>
+
+        <!--
+        Cleck events
+        Size of the window
+        create_box(color,num)
+        get_random(num)
+        get params
+        -->
+
+        <button id="addBlue" value="blue" class="blueButton">Add Blue</button>
+        <button id="addRed" value="red" class="redButton">Add Red</button>
+        <button id="removeBlue" value="blue">Remove Blue</button>
+        <button id="removeRed" value="red">Remove Red</button>
+        <button id="removeAll" value="all">Remove All</button>
+
+        <script type="text/javascript">
+
+            $(document).ready(function () {
+
+                //global variables
+                var p = 0.9;
+                window.wHeight = p * $(window).innerHeight();
+                window.wWidth = p * $(window).innerWidth();
+                //counters
+                window.blueCount = 1;
+                window.redCount = 1;
+                window.mybody = $("body");
+
+
+                //---------------------------------------------------------------------------------------
+                //
+                //get parameters from the url
+
+                getURLParam = function (name) {
+                    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+                    if (!results)
+                        return null;
+                    if (!results[1])
+                        return '';
+                    return ((results == null) || (results[1] == null)) ? '' : results[1];
+
+                };
+
+
+                var name = getURLParam('name');
+                var id = getURLParam('id');
+                console.log(name + "  " + id);
+
+                //---------------------------------------------------------------------------------------
+                //      
+                //display parameters
+
+                mybody.append("<p id='urlName'></p><p id='urlID'></p>");
+                if (!(name == null))
+                    $("#urlName").text("Name: " + name);
+
+                if (!(id == null))
+                    $("#urlID").text("ID: " + id);
+
+                //---------------------------------------------------------------------------------------
+                //
+                //add canvas(div)
+
+                var mycanvas = document.createElement("div");
+
+                mycanvas.id = "canvas";
+                $("#urlID").after(mycanvas);
+                window.h = wHeight - $("#canvas").position().top;
+                console.log("size issss:" + $("#canvas").position().top);
+                window.w = wWidth;
+                $("#canvas").css({"height": h, "width": w});
+                console.log("Width: " + w + ". Height: " + wHeight);
+                console.log("Canvas Width: " + w + ". Height: " + h);
+                console.log("Position: " + $("#urlID").position().top);
+
+                //---------------------------------------------------------------------------------------        
+                //
+                //onclick methods for all of the buttons
+                $("button").click(function () {
+                    var bid = this.id;
+                    //console.log("Clicked id: "+bid);
+                    switch (bid) {
+                        case (bid = "addBlue"):
+                            //console.log("addBlue action | blueCount = "+blueCount);
+                            create_box("blue", blueCount);
+                            blueCount++;
+                            break;
+                        case (bid = "addRed"):
+                            //console.log("addRed action | blueCount = "+redCount);
+                            create_box("red", redCount);
+                            redCount++;
+                            break;
+                        case (bid = "removeBlue"):
+                            //console.log("removeBlue action | blueCount = "+blueCount);
+                            remove_box("blue");
+                            break;
+                        case (bid = "removeRed"):
+                            //console.log("removeRed action | redCount = "+redCount);
+                            remove_box("red");
+                            break;
+                        case (bid = "removeAll"):
+                            //console.log("removeAll action...");
+                            remove_all();
+                            break;
+                    }
+
+                });
+                //---------------------------------------------------------------------------------------
+                //
+                //functions to calculate random size and position
+                get_random_size = function (size) {
+                    //console.log("Size: "+ Math.floor((Math.random() * (0.25*size)) + 20));            
+                    return Math.floor((Math.random() * (0.25 * size)) + 20);
+
+                }
+
+
+                get_random_position = function (size, squareSize) {
+                    //console.log("Position: " + Math.floor(Math.random() * size));
+                    do {
+                        var random = Math.floor((Math.random() * size));
+                    } while ((random + squareSize) > size);
+                    return random;
+
+                }
+
+                //---------------------------------------------------------------------------------------
+                //
+                //function to add and remove the box to the screen
+                create_box = function (color, num) {
+                    var mydiv = document.createElement("div");
+
+                    var size = get_random_size(h);
+                    var pos_left = get_random_position(w, size);
+                    var pos_top = get_random_position(h, size);
+
+
+                    mydiv.id = color + num;
+
+                    $("#canvas").append(mydiv);
+
+
+                    $("#" + color + num).css({"height": size, "width": size, "top": pos_top, "left": pos_left});
+
+
+                    document.getElementById(color + num).className = color;
+                    //  $("#"+color+num).css({"height":size,"width":size,"top":pos_top,"left":pos_left});
+                    $("#" + color + num).html("<p class='div_num' id='span" + color + num + "'>" + num + "</p>");
+                    $("#span" + color + num).css("font-size", $("#" + color + num).width * 0.3);
+
+
+
+                    console.log("DIV ID: " + mydiv.id);
+                    console.log("DIV INFO: ");
+                    console.log(mydiv);
+                    console.log("DIV PARENT: ");
+                    console.log(mydiv.parentNode);
+                    console.log("------------------------------------");
+                    console.log("Width = " + size + ". Height = " + size);
+                    console.log("Top = " + pos_top + ". left = " + pos_left);
+                    console.log("fontsize is: " + size / 10 + "px");
+                    console.log("------------------------------------");
+
+                }
+                //remove one box
+                remove_box = function (color) {
+
+                    switch (color) {
+                        case 'red':
+                            if (redCount > 1) {
+                                redCount--;
+                                $("#red" + (redCount)).remove();
+                            }
+                            break;
+                        case 'blue':
+                            if (blueCount > 1) {
+                                blueCount--;
+                                $("#blue" + (blueCount)).remove();
+                            }
+                            break;
+                    }
+
+                }
+                //remove all boxes
+                remove_all = function () {
+                    var divs = document.getElementsByTagName("div");
+                    while (divs[1]) {
+                        divs[1].parentNode.removeChild(divs[1]);
+                    }
+                    redCount = 1;
+                    blueCount = 1;
+                }
+                //---------------------------------------------------------------------------------------
+            });
+
+        </script>
+
+    </body>
+</html>
